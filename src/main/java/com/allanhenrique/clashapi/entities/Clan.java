@@ -1,0 +1,35 @@
+package com.allanhenrique.clashapi.entities;
+
+import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+
+@Entity
+@Table(name = "tb_clans")
+@Getter // Cria todos os Getters
+@Setter // Cria todos os Setters
+@NoArgsConstructor // Cria o construtor vazio
+@AllArgsConstructor // Cria o construtor com tudo
+public class Clan {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @NotBlank(message = "O nome do clã é obrigatório")
+    @Size(min = 3, max = 50, message = "O nome deve ter entre 3 e 50 caracteres")
+    @Column(nullable = false, unique = true)
+    private String name;
+
+    @NotBlank(message = "A descrição é obrigatória")
+    @Column(length = 500)
+    private String description;
+
+    @Min(value = 0, message = "Os troféus necessários não podem ser negativos")
+    private Integer requiredTrophies;
+}
