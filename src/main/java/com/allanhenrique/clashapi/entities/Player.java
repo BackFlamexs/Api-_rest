@@ -9,8 +9,10 @@ import java.util.Set;
 
 @Entity
 @Table(name = "tb_players")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Player {
 
     @Id
@@ -21,16 +23,18 @@ public class Player {
     @Size(min = 3, max = 20, message = "O nickname deve ter entre 3 e 20 caracteres")
     private String nickname;
 
+    @NotNull(message = "O nível é obrigatório")
     @Min(value = 1, message = "O nível mínimo é 1")
     @Max(value = 300, message = "O nível máximo permitido é 300")
     private Integer level;
 
-    // REQUISITO: Implementar um Enum
+    //implementar um Enum
     @Enumerated(EnumType.STRING)
     @NotNull(message = "O cargo role é obrigatório")
     private Role role;
 
-    @ManyToOne
+    @NotNull(message = "O jogador deve pertencer a um clã")
+    @ManyToOne // Remova o cascade daqui!
     @JoinColumn(name = "clan_id")
     private Clan clan;
 

@@ -3,7 +3,9 @@ package com.allanhenrique.clashapi.controllers;
 import com.allanhenrique.clashapi.entities.Village;
 import com.allanhenrique.clashapi.repositories.VillageRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -40,22 +42,23 @@ public class VillageController {
         Village village = obj.get();
 
         Link selfLink = linkTo(methodOn(VillageController.class).findById(id)).withSelfRel();
-        Link allVillagesLink = linkTo(methodOn(VillageController.class).findAll(null)).withRel("todas_vilas");
+        Link allVillagesLink = linkTo(VillageController.class).withRel("todas_vilas");
         Link deleteLink = linkTo(methodOn(VillageController.class).delete(id)).withRel("deletar_vila");
 
         return ResponseEntity.ok().body(EntityModel.of(village, selfLink, allVillagesLink, deleteLink));
     }
 
     @Operation(summary = "Criar nova vila")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @PostMapping
-    public ResponseEntity<Village> insert(@RequestBody Village village) {
+    public ResponseEntity<Village> insert(@Valid @RequestBody Village village) {
         Village savedVillage = villageRepository.save(village);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedVillage);
     }
 
     @Operation(summary = "Atualizar vila")
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Village> update(@PathVariable Long id, @RequestBody Village villageDetails) {
+    public ResponseEntity<Village> update(@PathVariable Long id,@Valid @RequestBody Village villageDetails) {
         Optional<Village> obj = villageRepository.findById(id);
         if (obj.isEmpty()) {
             return ResponseEntity.notFound().build();

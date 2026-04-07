@@ -3,7 +3,9 @@ package com.allanhenrique.clashapi.controllers;
 import com.allanhenrique.clashapi.entities.Player;
 import com.allanhenrique.clashapi.repositories.PlayerRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,36 +27,54 @@ public class PlayerController {
     private PlayerRepository playerRepository;
 
     @Operation(summary = "Listar jogadores paginados")
+    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso de jogadores")
+    @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos")
     @GetMapping
     public ResponseEntity<Page<Player>> findAll(Pageable pageable) {
         Page<Player> page = playerRepository.findAll(pageable);
         return ResponseEntity.ok().body(page);
     }
     @Operation(summary = "Buscar jogador por ID")
+    @ApiResponse(responseCode = "200", description = "Registro de jogador encontrado")
+    @ApiResponse(responseCode = "400", description = "ID fornecido em formato inválido")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado no banco")
     @GetMapping(value = "/{id}")
     public ResponseEntity<EntityModel<Player>> findById(@PathVariable Long id) {
         Optional<Player> obj = playerRepository.findById(id);
         if (obj.isEmpty()) return ResponseEntity.notFound().build();
 
         Player player = obj.get();
-        Link selfLink = linkTo(methodOn(PlayerController.class).findById(id)).withSelfRel();
-        Link allPlayersLink = linkTo(methodOn(PlayerController.class).findAll(null)).withRel("todos_jogadores");
-        Link deleteLink = linkTo(methodOn(PlayerController.class).delete(id)).withRel("deletar_jogador");
+        Link selfLink = linkTo(PlayerController.class).slash(player.getId()).withSelfRel();
+        Link allPlayersLink = linkTo(PlayerController.class).withRel("todos_jogadores");
+        Link deleteLink = linkTo(PlayerController.class).slash(player.getId()).withRel("deletar_jogador");
 
         return ResponseEntity.ok().body(EntityModel.of(player, selfLink, allPlayersLink, deleteLink));
     }
 
     //criando um novo player
     @Operation(summary = "Criar novo jogador")
+    @ApiResponse(responseCode = "201", description = "Criado um player com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos enviados")
     @PostMapping
-    public ResponseEntity<Player> insert(@RequestBody Player player) {
-        Player savedPlayer = playerRepository.save(player);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedPlayer);
+    public ResponseEntity<?> insert(@Valid @RequestBody Player player) {
+        try {
+            System.out.println("Tentando salvar o jogador: " + player.getNickname());
+
+            Player savedPlayer = playerRepository.save(player);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedPlayer);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Erro interno: " + e.getMessage());
+        }
     }
     //atualizando um player que ja existe criado e somente mudando os dados
     @Operation(summary = "Atualizar jogador")
+    @ApiResponse(responseCode = "200", description = "Atualizado o player com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado para atualização")
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Player> update(@PathVariable Long id, @RequestBody Player playerDetails) {
+    public ResponseEntity<Player> update(@PathVariable Long id,@Valid @RequestBody Player playerDetails) {
         Optional<Player> obj = playerRepository.findById(id);
         if (obj.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -70,6 +90,9 @@ public class PlayerController {
     }
     //Excluindo um player
     @Operation(summary = "Deletar jogador")
+    @ApiResponse(responseCode = "204", description = "Excluído com sucesso")
+    @ApiResponse(responseCode = "400", description = "ID inválido")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!playerRepository.existsById(id)) {
@@ -80,6 +103,8 @@ public class PlayerController {
     }
     // consulta para puxar os dados de usuario que nao precisa colocar o nome inteiro dele
     @Operation(summary = "Buscar jogador por Nickname (filtro)")
+    @ApiResponse(responseCode = "200", description = "Busca realizada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Parâmetros de busca inválidos")
     @GetMapping(value = "/search")
     public ResponseEntity<List<Player>> searchByNickname(@RequestParam String nickname) {
         // Aqui chamamos o método que você acabou de criar no Repository!

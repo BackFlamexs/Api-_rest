@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,8 @@ public class ClanController {
 
     //Paginado (Buscar todos divididos em páginas)
     @Operation(summary = "Lista todos os clãs (HATEOAS)", description = "Retorna uma lista de clãs com links de navegação")
+    @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos")
     @GetMapping
     public ResponseEntity<CollectionModel<EntityModel<Clan>>> findAll(Pageable pageable) {
         //buscando a página de clãs no banco de dados
@@ -47,10 +50,9 @@ public class ClanController {
     }
 
     @Operation(summary = "Busca clã por ID", description = "Retorna os detalhes de um clã específico baseado no seu ID")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Clã encontrado com sucesso"),
-            @ApiResponse(responseCode = "404", description = "Clã não encontrado ou nao criado")
-    })
+    @ApiResponse(responseCode = "200", description = "Registro encontrado")
+    @ApiResponse(responseCode = "400", description = "ID fornecido em formato inválido")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado no banco")
     //buscando apenas um clã específico
     @GetMapping(value = "/{id}")
     public ResponseEntity<EntityModel<Clan>> findById(@PathVariable Long id) {
@@ -64,7 +66,7 @@ public class ClanController {
         Link selfLink = linkTo(methodOn(ClanController.class).findById(id)).withSelfRel();
 
         //link todos_clans
-        Link allClansLink = linkTo(methodOn(ClanController.class).findAll(null)).withRel("todos_clans");
+        Link allClansLink = linkTo(ClanController.class).withRel("todos_clans");
 
         //link deletar Atalho que já aponta para a rota de exclusão deste clã
         Link deleteLink = linkTo(methodOn(ClanController.class).delete(id)).withRel("deletar_este_clã");
@@ -76,18 +78,22 @@ public class ClanController {
     }
 
     //criando um noovo clan
-    @Operation(summary = "Criar novo clã")
+    @Operation(summary = "Criar novo clã que ainda nao existe")
     @ApiResponse(responseCode = "201", description = "Clã criado com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos enviados")
     @PostMapping
-    public ResponseEntity<Clan> insert(@RequestBody Clan clan) {
+    public ResponseEntity<Clan> insert(@Valid @RequestBody Clan clan) {
         Clan savedClan = clanRepository.save(clan);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedClan);
     }
 
     //atualizando um clan que ja existe criado e somente mudando os dados
-    @Operation(summary = "Atualizar clã")
+    @Operation(summary = "Atualizar um clã que ja foi criado")
+    @ApiResponse(responseCode = "200", description = "clã atualizado com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado para atualização desse clã")
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Clan> update(@PathVariable Long id, @RequestBody Clan clanDetails) {
+    public ResponseEntity<Clan> update(@PathVariable Long id,@Valid @RequestBody Clan clanDetails) {
         Optional<Clan> obj = clanRepository.findById(id);
         if (obj.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -103,6 +109,9 @@ public class ClanController {
     }
     //Excluindo um clan
     @Operation(summary = "Deletar clã")
+    @ApiResponse(responseCode = "204", description = "clã excluído com sucesso")
+    @ApiResponse(responseCode = "400", description = "ID do clã inválido")
+    @ApiResponse(responseCode = "404", description = "Registro do clã não encontrado")
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!clanRepository.existsById(id)) {
@@ -113,6 +122,8 @@ public class ClanController {
     }
     //consulta de trofeus minimos
     @Operation(summary = "Filtrar clãs por troféus mínimos")
+    @ApiResponse(responseCode = "200", description = "Busca realizada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Parâmetros de busca inválidos")
     @GetMapping(value = "/search")
     public ResponseEntity<List<Clan>> searchByTrophies(@RequestParam(name = "minTrophies", defaultValue = "0") Integer minTrophies) {
         List<Clan> list = clanRepository.findByRequiredTrophiesGreaterThanEqual(minTrophies);

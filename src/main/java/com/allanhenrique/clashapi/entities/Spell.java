@@ -20,6 +20,7 @@ public class Spell {
     @NotBlank(message = "O nome do feitiço é obrigatório")
     private String name;
 
+    @NotBlank(message = "O tipo do feitiço é obrigatório")
     private String type; // Ex: Cura, Fúria, Salto
 
     @ManyToMany

@@ -3,6 +3,7 @@ package com.allanhenrique.clashapi.entities;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -11,8 +12,8 @@ import lombok.AllArgsConstructor;
 
 @Entity
 @Table(name = "tb_clans")
-@Getter // Cria todos os Getters
-@Setter // Cria todos os Setters
+@Getter
+@Setter
 @NoArgsConstructor // Cria o construtor vazio
 @AllArgsConstructor // Cria o construtor com tudo
 public class Clan {
@@ -30,6 +31,8 @@ public class Clan {
     @Column(length = 500)
     private String description;
 
+    @NotNull(message = "A quantidade de troféus é obrigatória")
     @Min(value = 0, message = "Os troféus necessários não podem ser negativos")
+    @Column(nullable = false)
     private Integer requiredTrophies;
 }

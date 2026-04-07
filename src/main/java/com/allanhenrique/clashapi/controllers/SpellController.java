@@ -3,7 +3,9 @@ package com.allanhenrique.clashapi.controllers;
 import com.allanhenrique.clashapi.entities.Spell;
 import com.allanhenrique.clashapi.repositories.SpellRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +28,8 @@ public class SpellController {
 
     // listando todos os proderes ja criados
     @Operation(summary = "Listar feitiços paginados")
+    @ApiResponse(responseCode = "200", description = "Lista de feiticos retornada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos")
     @GetMapping
     public ResponseEntity<Page<Spell>> findAll(Pageable pageable) {
         Page<Spell> page = spellRepository.findAll(pageable);
@@ -34,6 +38,9 @@ public class SpellController {
 
     //verificando se existe os feiticos por ID
     @Operation(summary = "Buscar feitiço por ID")
+    @ApiResponse(responseCode = "200", description = "Registro de feitico encontrado")
+    @ApiResponse(responseCode = "400", description = "ID fornecido em formato inválido")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado no banco")
     @GetMapping(value = "/{id}")
     public ResponseEntity<EntityModel<Spell>> findById(@PathVariable Long id) {
         Optional<Spell> obj = spellRepository.findById(id);
@@ -42,7 +49,7 @@ public class SpellController {
         Spell spell = obj.get();
 
         Link selfLink = linkTo(methodOn(SpellController.class).findById(id)).withSelfRel();
-        Link allSpellsLink = linkTo(methodOn(SpellController.class).findAll(null)).withRel("todos_feiticos");
+        Link allSpellsLink = linkTo(SpellController.class).withRel("todos_feiticos");
         Link deleteLink = linkTo(methodOn(SpellController.class).delete(id)).withRel("deletar_feitico");
 
         return ResponseEntity.ok().body(EntityModel.of(spell, selfLink, allSpellsLink, deleteLink));
@@ -50,16 +57,21 @@ public class SpellController {
 
     //criando um novo feitico
     @Operation(summary = "Criar novo feitiço")
+    @ApiResponse(responseCode = "201", description = "Criado um novo feitico com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos enviados")
     @PostMapping
-    public ResponseEntity<Spell> insert(@RequestBody Spell spell) {
+    public ResponseEntity<Spell> insert(@Valid @RequestBody Spell spell) {
         Spell savedSpell = spellRepository.save(spell);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedSpell);
     }
 
     // atualiza os dados ja existentes do feitico
     @Operation(summary = "Atualizar feitiço")
+    @ApiResponse(responseCode = "200", description = "Atualizado o feitico com sucesso")
+    @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado para atualização")
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Spell> update(@PathVariable Long id, @RequestBody Spell spellDetails) {
+    public ResponseEntity<Spell> update(@PathVariable Long id,@Valid @RequestBody Spell spellDetails) {
         Optional<Spell> obj = spellRepository.findById(id);
         if (obj.isEmpty()) {
             return ResponseEntity.notFound().build();
@@ -75,6 +87,9 @@ public class SpellController {
 
     //deletando um feitico ja criado
     @Operation(summary = "Deletar feitiço")
+    @ApiResponse(responseCode = "204", description = "Excluído o feitico com sucesso")
+    @ApiResponse(responseCode = "400", description = "ID inválido")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado")
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!spellRepository.existsById(id)) {
@@ -86,6 +101,8 @@ public class SpellController {
 
     //consulta por categoria, dano ou cura
     @Operation(summary = "Buscar feitiços por tipo")
+    @ApiResponse(responseCode = "200", description = "Busca realizada com sucesso")
+    @ApiResponse(responseCode = "400", description = "Parâmetros de busca inválidos")
     @GetMapping(value = "/search")
     public ResponseEntity<List<Spell>> searchByType(@RequestParam String type) {
         List<Spell> list = spellRepository.findByTypeIgnoreCase(type);
