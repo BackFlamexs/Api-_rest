@@ -20,7 +20,7 @@ import org.springframework.hateoas.Link;
 
 @RestController
 @RequestMapping(value = "/spells")
-@Tag(name = "Feitiços", description = "Endpoints para gerenciar os feitiços")
+@Tag(name = "5. Feitiços", description = "Arsenal mágico disponível para as batalhas. Assim como as Tropas, os Feitiços funcionam como um catálogo independente. Aqui você registra os nomes das magias e classifica os seus tipos (ex: feitiços de SUPORTE, DANO, MAGIA ou AGUA). ")
 public class SpellController {
 
     @Autowired

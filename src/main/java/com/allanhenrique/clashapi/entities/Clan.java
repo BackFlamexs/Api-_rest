@@ -1,5 +1,6 @@
 package com.allanhenrique.clashapi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +10,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+
+import java.util.List;
 
 @Entity
 @Table(name = "tb_clans")
@@ -35,4 +38,8 @@ public class Clan {
     @Min(value = 0, message = "Os troféus necessários não podem ser negativos")
     @Column(nullable = false)
     private Integer requiredTrophies;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "clan")
+    private List<Player> players;
 }

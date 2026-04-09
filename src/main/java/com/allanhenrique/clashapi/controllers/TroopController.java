@@ -20,7 +20,7 @@ import org.springframework.hateoas.Link;
 
 @RestController
 @RequestMapping(value = "/troops")
-@Tag(name = "Tropas", description = "Endpoints para gerenciar as tropas")
+@Tag(name = "4. Tropas", description = "Catálogo de unidades do exército do jogo. Esta é uma entidade independente onde você cadastra os guerreiros de combate (como P.E.K.K.A, Dragão ou Arqueira) e define o poder de dano de cada um. Por ser um catálogo livre.")
 public class TroopController {
 
     @Autowired

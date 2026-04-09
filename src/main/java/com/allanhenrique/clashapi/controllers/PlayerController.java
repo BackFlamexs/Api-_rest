@@ -20,7 +20,7 @@ import org.springframework.hateoas.Link;
 
 @RestController
 @RequestMapping(value = "/players")
-@Tag(name = "Jogadores", description = "Endpoints para gerenciar os jogadores")
+@Tag(name = "2. Jogadores", description = "Administração de todos os usuários (Players) do ecossistema. Este módulo permite o cadastro de novos jogadores, definição de seus níveis de experiência e alocação de cargos específicos dentro do grupo (como LIDER, CO_LIDER, ANCIAO e MEMBRO).")
 public class PlayerController {
 
     @Autowired

@@ -1,5 +1,6 @@
 package com.allanhenrique.clashapi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -49,4 +50,9 @@ public class Player {
     // relacao com a ultima entidade que eu estou criando
     @ManyToMany(mappedBy = "players")
     private Set<Spell> spells = new HashSet<>();
+
+    // relacao de 1 para 1 com a vila que apaga a vila caso nao tenha um player vinculado a ela, no swagger precisa vincular a vila a algum player na hora de criacao.
+    @JsonIgnore
+    @OneToOne(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Village village;
 }

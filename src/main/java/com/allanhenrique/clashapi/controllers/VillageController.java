@@ -20,7 +20,7 @@ import org.springframework.hateoas.Link;
 
 @RestController
 @RequestMapping(value = "/villages")
-@Tag(name = "Vilas", description = "Endpoints para gerenciar as vilas dos jogadores")
+@Tag(name = "3. Vilas", description = "Controle das bases físicas dos jogadores. A Vila tem um relacionamento direto e exclusivo (1 para 1) com um Jogador. Você pode enviar os dados do Jogador junto, e o sistema criará ambos simultaneamente. Da mesma forma, deletar uma Vila irá remover o jogador dono dela, garantindo a integridade dos dados e evitando registros órfãos.")
 public class VillageController {
 
     @Autowired

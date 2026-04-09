@@ -22,7 +22,7 @@ import org.springframework.hateoas.Link;
 
 @RestController
 @RequestMapping(value = "/clans")
-@Tag(name = "Clãs", description = "Endpoints para gerenciar os clãs do jogo")
+@Tag(name = "1. Clãs", description = "Gerenciamento central das alianças do jogo. Aqui você pode criar novos clãs, definir a quantidade mínima de troféus exigida para entrada e atualizar as informações do grupo. O Clã é a entidade raiz do sistema.")
 public class ClanController {
 
     @Autowired
