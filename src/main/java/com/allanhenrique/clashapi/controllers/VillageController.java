@@ -6,9 +6,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +30,7 @@ public class VillageController {
 
     @Operation(summary = "Listar todas as vilas")
     @GetMapping
-    public ResponseEntity<Page<Village>> findAll(Pageable pageable) {
+    public ResponseEntity<Page<Village>> findAll(@ParameterObject @PageableDefault(page = 0, size = 10) Pageable pageable)  {
         Page<Village> page = villageRepository.findAll(pageable);
         return ResponseEntity.ok().body(page);
     }

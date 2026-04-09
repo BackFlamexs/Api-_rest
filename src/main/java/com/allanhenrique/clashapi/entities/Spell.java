@@ -1,5 +1,6 @@
 package com.allanhenrique.clashapi.entities;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -15,12 +16,15 @@ public class Spell {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "ID do feitiço", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
     @NotBlank(message = "O nome do feitiço é obrigatório")
+    @Schema(example = "Feitiço de Fúria", description = "Nome da magia")
     private String name;
 
     @NotBlank(message = "O tipo do feitiço é obrigatório")
+    @Schema(example = "SUPORTE", description = "Tipo de efeito (DANO, SUPORTE, CURA, SALTO)")
     private String type; // Ex: Cura, Fúria, Salto
 
     @ManyToMany

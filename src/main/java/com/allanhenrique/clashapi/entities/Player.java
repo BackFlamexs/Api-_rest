@@ -1,6 +1,7 @@
 package com.allanhenrique.clashapi.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -18,25 +19,30 @@ public class Player {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "ID do jogador", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
     @NotBlank(message = "O nickname não pode ser vazio")
     @Size(min = 3, max = 20, message = "O nickname deve ter entre 3 e 20 caracteres")
+    @Schema(example = "Allan_Pro", description = "Nome de exibição no jogo")
     private String nickname;
 
     @NotNull(message = "O nível é obrigatório")
     @Min(value = 1, message = "O nível mínimo é 1")
     @Max(value = 300, message = "O nível máximo permitido é 300")
+    @Schema(example = "75", description = "Nível de experiência atual")
     private Integer level;
 
     //implementar um Enum
     @Enumerated(EnumType.STRING)
     @NotNull(message = "O cargo role é obrigatório")
+    @Schema(example = "LIDER", description = "Cargo hierárquico no clã")
     private Role role;
 
     @NotNull(message = "O jogador deve pertencer a um clã")
     @ManyToOne // Remova o cascade daqui!
     @JoinColumn(name = "clan_id")
+    @Schema(description = "Vínculo com o clã")
     private Clan clan;
 
     @ManyToMany

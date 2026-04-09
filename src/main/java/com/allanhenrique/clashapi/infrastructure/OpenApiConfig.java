@@ -1,28 +1,21 @@
 package com.allanhenrique.clashapi.infrastructure;
 
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.info.Contact;
-import io.swagger.v3.oas.annotations.info.Info;
-import io.swagger.v3.oas.annotations.info.License;
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@OpenAPIDefinition(
-        info = @Info(
-                title = "Your API Title",
-                version = "1.0.0",
-                description = "A description of your API.",
-                contact = @Contact(
-                        name = "Your Name",
-                        email = "your.email@example.com"
-                ),
-                license = @License(
-                        name = "MIT License",
-                        url = "https://opensource.org" // URL to the MIT license
-                )
-        )
-)
 public class OpenApiConfig {
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Clash API - Gerenciamento de Vilas e Tropas")
+                        .version("1.0.0")
+                        .description("API RESTful desenvolvida para o gerenciamento completo de um ecossistema estilo Clash. " +
+                                "\n\nEsta documentação oferece os endpoints necessários para administrar Clãs, Jogadores, Vilas, Tropas e Feitiços.")
+                );
+    }
 }

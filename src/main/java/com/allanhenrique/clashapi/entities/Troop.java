@@ -1,5 +1,6 @@
 package com.allanhenrique.clashapi.entities;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -22,13 +23,16 @@ public class Troop {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "ID da tropa", accessMode = Schema.AccessMode.READ_ONLY)
     private Long id;
 
     @NotBlank(message = "O nome da tropa é obrigatório")
+    @Schema(example = "Dragão Elétrico", description = "Nome da unidade militar")
     private String name;
 
     @NotNull(message = "O dano é obrigatório")
     @Min(value = 0, message = "O dano não pode ser negativo")
+    @Schema(example = "1050", description = "Dano por segundo (DPS)")
     private Integer damage;
 
     // ManyToMany
