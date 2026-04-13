@@ -34,8 +34,8 @@ public class Village {
 
     // Relacionamento de uma vila para um jogador, o jogador somente pode ter uma vila naquela conta de id e caso ele queira ter outra vila tera que criar outra conta ccom outro ID
     @NotNull(message = "A vila deve pertencer a um jogador")
-    @OneToOne(cascade = CascadeType.ALL)
+    @OneToOne
     @JoinColumn(name = "player_id", unique = true)
-    @Schema(description = "Jogador proprietário desta vila")
+    @Schema(example = "{ \"id\": 1 }", description = "ID do jogador que já existe")
     private Player player;
 }

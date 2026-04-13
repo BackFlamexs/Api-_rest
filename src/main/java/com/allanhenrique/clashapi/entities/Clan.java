@@ -18,8 +18,8 @@ import java.util.List;
 @Table(name = "tb_clans")
 @Getter
 @Setter
-@NoArgsConstructor // Cria o construtor vazio
-@AllArgsConstructor // Cria o construtor com tudo
+@NoArgsConstructor
+@AllArgsConstructor
 public class Clan {
 
     @Id

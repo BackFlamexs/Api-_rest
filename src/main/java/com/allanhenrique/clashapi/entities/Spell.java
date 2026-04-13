@@ -27,6 +27,7 @@ public class Spell {
     @Schema(example = "SUPORTE", description = "Tipo de efeito (DANO, SUPORTE, CURA, SALTO)")
     private String type; // Ex: Cura, Fúria, Salto
 
+    @Schema(hidden = true)
     @ManyToMany
     @JoinTable(
             name = "tb_player_spells",

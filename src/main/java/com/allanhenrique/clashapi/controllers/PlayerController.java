@@ -1,6 +1,8 @@
 package com.allanhenrique.clashapi.controllers;
 
+import com.allanhenrique.clashapi.entities.Clan;
 import com.allanhenrique.clashapi.entities.Player;
+import com.allanhenrique.clashapi.repositories.ClanRepository;
 import com.allanhenrique.clashapi.repositories.PlayerRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,6 +29,9 @@ public class PlayerController {
 
     @Autowired
     private PlayerRepository playerRepository;
+
+    @Autowired
+    private ClanRepository clanRepository;
 
     @Operation(summary = "Listar jogadores paginados")
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso de jogadores")
@@ -62,6 +67,17 @@ public class PlayerController {
         try {
             System.out.println("Tentando salvar o jogador: " + player.getNickname());
 
+            // --- INÍCIO DO CÓDIGO NOVO ---
+            if (player.getClan() != null && player.getClan().getId() != null) {
+                java.util.Optional<Clan> clanBuscado = clanRepository.findById(player.getClan().getId());
+
+                if (clanBuscado.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro: Clã com ID " + player.getClan().getId() + " não encontrado.");
+                }
+
+                player.setClan(clanBuscado.get());
+            }
+
             Player savedPlayer = playerRepository.save(player);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(savedPlayer);
@@ -76,18 +92,44 @@ public class PlayerController {
     @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
     @ApiResponse(responseCode = "404", description = "Registro não encontrado para atualização")
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Player> update(@PathVariable Long id,@Valid @RequestBody Player playerDetails) {
+    public ResponseEntity<?> update(@PathVariable Long id, @Valid @RequestBody Player playerDetails) {
+        System.out.println("🔥 [DEBUG] Entrou no PUT! Tentando atualizar o jogador ID: " + id);
+
         Optional<Player> obj = playerRepository.findById(id);
         if (obj.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            System.out.println("❌ [DEBUG] Falhou: Jogador ID " + id + " não encontrado.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro: Jogador com ID " + id + " não encontrado.");
         }
 
         Player playerToUpdate = obj.get();
+        System.out.println("✅ [DEBUG] Jogador encontrado: " + playerToUpdate.getNickname());
+
         playerToUpdate.setNickname(playerDetails.getNickname());
         playerToUpdate.setLevel(playerDetails.getLevel());
         playerToUpdate.setRole(playerDetails.getRole());
 
+        // Verificando o clã
+        if (playerDetails.getClan() != null && playerDetails.getClan().getId() != null) {
+            Long clanId = playerDetails.getClan().getId();
+            System.out.println("🔍 [DEBUG] Buscando Clã novo com ID: " + clanId);
+
+            Optional<Clan> clanBuscado = clanRepository.findById(clanId);
+
+            if (clanBuscado.isEmpty()) {
+                System.out.println("❌ [DEBUG] Falhou: Clã ID " + clanId + " não existe!");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Erro: Clã com ID " + clanId + " não existe no banco.");
+            }
+
+            System.out.println("✅ [DEBUG] Clã encontrado! Vinculando...");
+            playerToUpdate.setClan(clanBuscado.get());
+        } else {
+            System.out.println("⚠️ [DEBUG] JSON veio sem clã. Removendo clã do jogador...");
+            playerToUpdate.setClan(null);
+        }
+
         Player updatedPlayer = playerRepository.save(playerToUpdate);
+        System.out.println("🚀 [DEBUG] Sucesso! Jogador atualizado no banco.");
+
         return ResponseEntity.ok().body(updatedPlayer);
     }
     //Excluindo um player
@@ -109,7 +151,6 @@ public class PlayerController {
     @ApiResponse(responseCode = "400", description = "Parâmetros de busca inválidos")
     @GetMapping(value = "/search")
     public ResponseEntity<List<Player>> searchByNickname(@RequestParam String nickname) {
-        // Aqui chamamos o método que você acabou de criar no Repository!
         List<Player> list = playerRepository.findByNicknameContainingIgnoreCase(nickname);
         return ResponseEntity.ok().body(list);
     }

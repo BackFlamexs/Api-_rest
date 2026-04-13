@@ -36,6 +36,7 @@ public class Troop {
     private Integer damage;
 
     // ManyToMany
+    @Schema(hidden = true)
     @ManyToMany(mappedBy = "troops")
     private Set<Player> players = new HashSet<>();
 }

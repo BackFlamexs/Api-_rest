@@ -1,7 +1,9 @@
 package com.allanhenrique.clashapi.controllers;
 
 import com.allanhenrique.clashapi.entities.Clan;
+import com.allanhenrique.clashapi.entities.Player;
 import com.allanhenrique.clashapi.repositories.ClanRepository;
+import com.allanhenrique.clashapi.repositories.PlayerRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,6 +23,7 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping(value = "/clans")
@@ -29,6 +32,9 @@ public class ClanController {
 
     @Autowired
     private ClanRepository clanRepository;
+
+    @Autowired
+    private PlayerRepository playerRepository;
 
     //Paginado (Buscar todos divididos em páginas)
     @Operation(summary = "Lista todos os clãs (HATEOAS)", description = "Retorna uma lista de clãs com links de navegação")
@@ -111,17 +117,24 @@ public class ClanController {
         return ResponseEntity.ok().body(updatedClan);
     }
     //Excluindo um clan
-    @Operation(summary = "Deletar clã")
+    @Operation(summary = "Deletar clã", description = "Deleta um clã e deixa todos os seus membros sem clã.")
     @ApiResponse(responseCode = "204", description = "clã excluído com sucesso")
     @ApiResponse(responseCode = "400", description = "ID do clã inválido")
     @ApiResponse(responseCode = "404", description = "Registro do clã não encontrado")
+    @Transactional
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         if (!clanRepository.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
+        List<Player> players = playerRepository.findByClanId(id);
+        for (Player player : players) {
+            player.setClan(null);
+            playerRepository.save(player);
+        }
+
         clanRepository.deleteById(id);
-        return ResponseEntity.noContent().build(); // Retorna 204 informando que foi delatado com sucesso o clan
+        return ResponseEntity.noContent().build();
     }
     //consulta de trofeus minimos
     @Operation(summary = "Filtrar clãs por troféus mínimos")

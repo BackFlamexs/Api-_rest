@@ -1,6 +1,8 @@
 package com.allanhenrique.clashapi.controllers;
 
+import com.allanhenrique.clashapi.entities.Player;
 import com.allanhenrique.clashapi.entities.Village;
+import com.allanhenrique.clashapi.repositories.PlayerRepository;
 import com.allanhenrique.clashapi.repositories.VillageRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -19,6 +21,7 @@ import java.util.Optional;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping(value = "/villages")
@@ -27,6 +30,9 @@ public class VillageController {
 
     @Autowired
     private VillageRepository villageRepository;
+
+    @Autowired
+    private PlayerRepository playerRepository;
 
     @Operation(summary = "Listar todas as vilas")
     @GetMapping
@@ -54,7 +60,13 @@ public class VillageController {
     @ApiResponse(responseCode = "400", description = "Dados inválidos")
     @PostMapping
     public ResponseEntity<Village> insert(@Valid @RequestBody Village village) {
+        Player playerExistente = playerRepository.findById(village.getPlayer().getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Jogador não encontrado"));
+
+        village.setPlayer(playerExistente);
+
         Village savedVillage = villageRepository.save(village);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(savedVillage);
     }
 

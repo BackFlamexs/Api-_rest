@@ -39,12 +39,12 @@ public class Player {
     @Schema(example = "LIDER", description = "Cargo hierárquico no clã")
     private Role role;
 
-    @NotNull(message = "O jogador deve pertencer a um clã")
-    @ManyToOne // Remova o cascade daqui!
+    @ManyToOne
     @JoinColumn(name = "clan_id")
-    @Schema(description = "Vínculo com o clã")
+    @Schema(example = "{\"id\": 1}")
     private Clan clan;
 
+    @Schema(hidden = true)
     @ManyToMany
     @JoinTable(
             name = "tb_player_troops",
@@ -54,6 +54,7 @@ public class Player {
     private Set<Troop> troops = new HashSet<>();
 
     // relacao com a ultima entidade que eu estou criando
+    @Schema(hidden = true)
     @ManyToMany(mappedBy = "players")
     private Set<Spell> spells = new HashSet<>();
 
