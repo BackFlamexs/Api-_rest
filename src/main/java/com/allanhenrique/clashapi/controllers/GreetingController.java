@@ -1,11 +1,13 @@
 package com.allanhenrique.clashapi.controllers;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.concurrent.atomic.AtomicLong;
 
+@Hidden // Oculta este controller da documentação do Swagger
 @RestController
 public class GreetingController {
 
@@ -13,12 +15,11 @@ public class GreetingController {
     private final AtomicLong counter = new AtomicLong();
 
     @GetMapping("/greetings")
-    public Greeting greeting(@RequestParam(defaultValue = "Olá turma de TSI") String text){
-        return new Greeting(counter.incrementAndGet(),template.formatted(text));
+    public Greeting greeting(@RequestParam(defaultValue = "Olá turma de TSI") String text) {
+        return new Greeting(counter.incrementAndGet(), template.formatted(text));
     }
 
-
-    class Greeting{
+    class Greeting {
         public long id;
         public String text;
 

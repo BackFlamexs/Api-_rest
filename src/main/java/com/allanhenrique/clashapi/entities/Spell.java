@@ -1,5 +1,6 @@
 package com.allanhenrique.clashapi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -25,8 +26,10 @@ public class Spell {
 
     @NotBlank(message = "O tipo do feitiço é obrigatório")
     @Schema(example = "SUPORTE", description = "Tipo de efeito (DANO, SUPORTE, CURA, SALTO)")
-    private String type; // Ex: Cura, Fúria, Salto
+    private String type;
 
+    // CORREÇÃO: @JsonIgnore evita loop infinito Spell → players → spells → players...
+    @JsonIgnore
     @Schema(hidden = true)
     @ManyToMany
     @JoinTable(

@@ -1,8 +1,11 @@
 package com.allanhenrique.clashapi.controllers;
 
+import com.allanhenrique.clashapi.dto.ClanV2Response;
 import com.allanhenrique.clashapi.entities.Clan;
+import com.allanhenrique.clashapi.entities.IdempotencyKey;
 import com.allanhenrique.clashapi.entities.Player;
 import com.allanhenrique.clashapi.repositories.ClanRepository;
+import com.allanhenrique.clashapi.repositories.IdempotencyKeyRepository;
 import com.allanhenrique.clashapi.repositories.PlayerRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -11,19 +14,24 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.Link;
-import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping(value = "/clans")
@@ -36,89 +44,119 @@ public class ClanController {
     @Autowired
     private PlayerRepository playerRepository;
 
-    //Paginado (Buscar todos divididos em páginas)
-    @Operation(summary = "Lista todos os clãs (HATEOAS)", description = "Retorna uma lista de clãs com links de navegação")
+    @Autowired
+    private IdempotencyKeyRepository idempotencyRepository;
+
+    @Operation(
+            summary = "Lista todos os clãs",
+            description = "Retorna uma lista paginada de clãs. " +
+                    "Suporta versionamento via header X-API-Version: " +
+                    "versão 1 retorna o formato padrão com links HATEOAS, " +
+                    "versão 2 retorna o formato estendido incluindo o total de membros de cada clã."
+    )
     @ApiResponse(responseCode = "200", description = "Lista retornada com sucesso")
     @ApiResponse(responseCode = "400", description = "Parâmetros de paginação inválidos")
     @GetMapping
-    public ResponseEntity<CollectionModel<EntityModel<Clan>>> findAll
-    (@ParameterObject @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        //buscando a página de clãs no banco de dados
+    public ResponseEntity<?> findAll(
+            @ParameterObject @PageableDefault(page = 0, size = 10) Pageable pageable,
+            @io.swagger.v3.oas.annotations.Parameter(name = "X-API-Version", description = "Versão da API (1 ou 2)", in = io.swagger.v3.oas.annotations.enums.ParameterIn.HEADER)
+            @RequestHeader(value = "X-API-Version", required = false, defaultValue = "1") String apiVersion) {
+
         Page<Clan> clans = clanRepository.findAll(pageable);
-        //para cada clã da lista, cria um EntityModel e adiciona um link individual self
+
+        // V2: retorna com campo totalMembers
+        if ("2".equals(apiVersion)) {
+            List<ClanV2Response> v2List = clans.stream().map(clan -> {
+                int totalMembers = playerRepository.findByClanId(clan.getId()).size();
+                return new ClanV2Response(
+                        clan.getId(),
+                        clan.getName(),
+                        clan.getDescription(),
+                        clan.getRequiredTrophies(),
+                        totalMembers
+                );
+            }).collect(Collectors.toList());
+            return ResponseEntity.ok()
+                    .header("X-API-Version", "2")
+                    .body(v2List);
+        }
+
+        // V1 (padrão): retorna com HATEOAS
         List<EntityModel<Clan>> clanModels = clans.stream()
                 .map(clan -> EntityModel.of(clan,
                         linkTo(methodOn(ClanController.class).findById(clan.getId())).withSelfRel()))
                 .toList();
-
-        //cria o link para a própria listagem
-        Link selfLink = linkTo(methodOn(ClanController.class).findAll(pageable)).withSelfRel();
-
-        //retorna a coleção completa com os links
-        return ResponseEntity.ok().body(CollectionModel.of(clanModels, selfLink));
+        Link selfLink = linkTo(methodOn(ClanController.class).findAll(pageable, apiVersion)).withSelfRel();
+        return ResponseEntity.ok()
+                .header("X-API-Version", "1")
+                .body(CollectionModel.of(clanModels, selfLink));
     }
 
-    @Operation(summary = "Busca clã por ID", description = "Retorna os detalhes de um clã específico baseado no seu ID")
+    @Operation(summary = "Busca clã por ID")
     @ApiResponse(responseCode = "200", description = "Registro encontrado")
     @ApiResponse(responseCode = "400", description = "ID fornecido em formato inválido")
     @ApiResponse(responseCode = "404", description = "Registro não encontrado no banco")
-    //buscando apenas um clã específico
     @GetMapping(value = "/{id}")
     public ResponseEntity<EntityModel<Clan>> findById(@PathVariable Long id) {
         Optional<Clan> obj = clanRepository.findById(id);
-
         if (obj.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
         Clan clan = obj.get();
-        //link self link para este próprio clã
         Link selfLink = linkTo(methodOn(ClanController.class).findById(id)).withSelfRel();
-
-        //link todos_clans
         Link allClansLink = linkTo(ClanController.class).withRel("todos_clans");
-
-        //link deletar Atalho que já aponta para a rota de exclusão deste clã
         Link deleteLink = linkTo(methodOn(ClanController.class).delete(id)).withRel("deletar_este_clã");
-
-        //monta o recurso Clã + Links
-        EntityModel<Clan> resource = EntityModel.of(clan, selfLink, allClansLink, deleteLink);
-
-        return ResponseEntity.ok().body(resource);
+        return ResponseEntity.ok().body(EntityModel.of(clan, selfLink, allClansLink, deleteLink));
     }
 
-    //criando um noovo clan
-    @Operation(summary = "Criar novo clã que ainda nao existe")
-    @ApiResponse(responseCode = "201", description = "Clã criado com sucesso")
-    @ApiResponse(responseCode = "400", description = "Dados inválidos enviados")
+    @Operation(summary = "Criar novo clã")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Clã criado com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos enviados"),
+            @ApiResponse(responseCode = "409", description = "Conflito: operação já processada (Idempotência)")
+    })
     @PostMapping
-    public ResponseEntity<Clan> insert(@Valid @RequestBody Clan clan) {
-        Clan savedClan = clanRepository.save(clan);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedClan);
+    public ResponseEntity<Clan> insert(
+            @io.swagger.v3.oas.annotations.Parameter(name = "X-Idempotency-Key", description = "Chave para evitar duplicidade", in = io.swagger.v3.oas.annotations.enums.ParameterIn.HEADER)
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
+            @Valid @RequestBody Clan clan) {
+
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            if (idempotencyRepository.existsById(idempotencyKey)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Esta operação já foi processada anteriormente.");
+            }
+        }
+
+        try {
+            Clan savedClan = clanRepository.saveAndFlush(clan);
+            if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+                idempotencyRepository.save(new IdempotencyKey(idempotencyKey));
+            }
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedClan);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Conflito de dados: já existe um clã com esse nome.");
+        }
     }
 
-    //atualizando um clan que ja existe criado e somente mudando os dados
-    @Operation(summary = "Atualizar um clã que ja foi criado")
-    @ApiResponse(responseCode = "200", description = "clã atualizado com sucesso")
+    @Operation(summary = "Atualizar um clã que já foi criado")
+    @ApiResponse(responseCode = "200", description = "Clã atualizado com sucesso")
     @ApiResponse(responseCode = "400", description = "Dados inválidos fornecidos")
-    @ApiResponse(responseCode = "404", description = "Registro não encontrado para atualização desse clã")
+    @ApiResponse(responseCode = "404", description = "Registro não encontrado para atualização")
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Clan> update(@PathVariable Long id,@Valid @RequestBody Clan clanDetails) {
+    public ResponseEntity<Clan> update(@PathVariable Long id, @Valid @RequestBody Clan clanDetails) {
         Optional<Clan> obj = clanRepository.findById(id);
         if (obj.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-
         Clan clanToUpdate = obj.get();
         clanToUpdate.setName(clanDetails.getName());
         clanToUpdate.setDescription(clanDetails.getDescription());
         clanToUpdate.setRequiredTrophies(clanDetails.getRequiredTrophies());
-
-        Clan updatedClan = clanRepository.save(clanToUpdate);
-        return ResponseEntity.ok().body(updatedClan);
+        return ResponseEntity.ok().body(clanRepository.save(clanToUpdate));
     }
-    //Excluindo um clan
-    @Operation(summary = "Deletar clã", description = "Deleta um clã e deixa todos os seus membros sem clã.")
-    @ApiResponse(responseCode = "204", description = "clã excluído com sucesso")
+
+    @Operation(summary = "Deletar clã")
+    @ApiResponse(responseCode = "204", description = "Clã excluído com sucesso")
     @ApiResponse(responseCode = "400", description = "ID do clã inválido")
     @ApiResponse(responseCode = "404", description = "Registro do clã não encontrado")
     @Transactional
@@ -132,16 +170,16 @@ public class ClanController {
             player.setClan(null);
             playerRepository.save(player);
         }
-
         clanRepository.deleteById(id);
         return ResponseEntity.noContent().build();
     }
-    //consulta de trofeus minimos
+
     @Operation(summary = "Filtrar clãs por troféus mínimos")
     @ApiResponse(responseCode = "200", description = "Busca realizada com sucesso")
     @ApiResponse(responseCode = "400", description = "Parâmetros de busca inválidos")
     @GetMapping(value = "/search")
-    public ResponseEntity<List<Clan>> searchByTrophies(@RequestParam(name = "minTrophies", defaultValue = "0") Integer minTrophies) {
+    public ResponseEntity<List<Clan>> searchByTrophies(
+            @RequestParam(name = "minTrophies", defaultValue = "0") Integer minTrophies) {
         List<Clan> list = clanRepository.findByRequiredTrophiesGreaterThanEqual(minTrophies);
         return ResponseEntity.ok().body(list);
     }

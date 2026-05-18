@@ -8,6 +8,8 @@ import java.util.List;
 
 @Repository
 public interface VillageRepository extends JpaRepository<Village, Long> {
+
+    boolean existsByPlayerId(Long playerId);
     //busca vilas com o cv maior ou igual ao numero passado
     List<Village> findByTownHallLevelGreaterThanEqual(Integer level);
 }

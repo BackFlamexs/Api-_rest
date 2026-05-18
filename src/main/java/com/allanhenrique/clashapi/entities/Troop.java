@@ -1,5 +1,6 @@
 package com.allanhenrique.clashapi.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
@@ -35,7 +36,8 @@ public class Troop {
     @Schema(example = "1050", description = "Dano por segundo (DPS)")
     private Integer damage;
 
-    // ManyToMany
+    // CORREÇÃO: @JsonIgnore evita loop infinito Troop → players → troops → players...
+    @JsonIgnore
     @Schema(hidden = true)
     @ManyToMany(mappedBy = "troops")
     private Set<Player> players = new HashSet<>();

@@ -1,8 +1,9 @@
 package com.allanhenrique.clashapi.entities;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import static jakarta.persistence.FetchType.LAZY;
 import jakarta.validation.constraints.*;
 import lombok.*;
 
@@ -33,7 +34,6 @@ public class Player {
     @Schema(example = "75", description = "Nível de experiência atual")
     private Integer level;
 
-    //implementar um Enum
     @Enumerated(EnumType.STRING)
     @NotNull(message = "O cargo role é obrigatório")
     @Schema(example = "LIDER", description = "Cargo hierárquico no clã")
@@ -53,13 +53,17 @@ public class Player {
     )
     private Set<Troop> troops = new HashSet<>();
 
-    // relacao com a ultima entidade que eu estou criando
     @Schema(hidden = true)
     @ManyToMany(mappedBy = "players")
     private Set<Spell> spells = new HashSet<>();
 
-    // relacao de 1 para 1 com a vila que apaga a vila caso nao tenha um player vinculado a ela, no swagger precisa vincular a vila a algum player na hora de criacao.
-    @JsonIgnore
-    @OneToOne(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
+    // CORREÇÃO 1: Exclui do toString() gerado pelo Lombok (evita StackOverflow)
+    @ToString.Exclude
+    // CORREÇÃO 2: Exclui do equals/hashCode gerado pelo Lombok (evita loop infinito)
+    @EqualsAndHashCode.Exclude
+    // CORREÇÃO 3: Ignora "player" ao serializar Village (quebra o loop JSON)
+    @JsonIgnoreProperties("player")
+    @OneToOne(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Schema(hidden = true)
     private Village village;
 }
