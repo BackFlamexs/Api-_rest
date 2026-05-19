@@ -38,9 +38,16 @@ public class ApiKeyFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+        // 1. Libera requisições OPTIONS (CORS Preflight) para todas as rotas
+        // O navegador não envia chaves de API durante o Preflight, então precisamos deixar passar.
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String path = request.getRequestURI();
 
-        // Verifica se a rota é pública — se for, deixa passar sem autenticar
+        // 2. Verifica se a rota é pública — se for, deixa passar sem autenticar
         for (String publicRoute : PUBLIC_ROUTES) {
             if (path.startsWith(publicRoute)) {
                 filterChain.doFilter(request, response);
@@ -48,7 +55,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             }
         }
 
-        // Lê o header X-API-Key da requisição
+        // 3. Lê o header X-API-Key da requisição para rotas protegidas
         String apiKey = request.getHeader("X-API-Key");
 
         // Se não veio o header, retorna 401
@@ -57,7 +64,7 @@ public class ApiKeyFilter extends OncePerRequestFilter {
             return;
         }
 
-        // Busca a chave no banco — só aceita se existir E estiver ativa
+        // 4. Busca a chave no banco — só aceita se existir E estiver ativa
         boolean valid = apiKeyRepository.findByKeyAndActiveTrue(apiKey).isPresent();
 
         if (!valid) {

@@ -14,7 +14,8 @@ public class CorsConfig implements WebMvcConfigurer {
                         "http://localhost:3000",   // React/Next.js local
                         "http://localhost:4200",   // Angular local
                         "http://localhost:8080",   // própria API (Swagger)
-                        "https://clash-api.onrender.com" // URL de produção (ajuste se necessário)
+                        "http://localhost:5173",   // Antigravity / Vite (Novo Front-end)
+                        "https://clash-api.onrender.com" // URL de produção
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*")
