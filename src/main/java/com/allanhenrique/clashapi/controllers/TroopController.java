@@ -127,6 +127,7 @@ public class TroopController {
 
         troopToUpdate.setName(troopDetails.getName());
         troopToUpdate.setDamage(troopDetails.getDamage());
+        troopToUpdate.setDamageType(troopDetails.getDamageType());
 
         return ResponseEntity.ok().body(troopRepository.save(troopToUpdate));
     }

@@ -73,6 +73,7 @@ public class ClanController {
                         clan.getName(),
                         clan.getDescription(),
                         clan.getRequiredTrophies(),
+                        clan.getIsPublic(),
                         totalMembers
                 );
             }).collect(Collectors.toList());
@@ -152,6 +153,9 @@ public class ClanController {
         clanToUpdate.setName(clanDetails.getName());
         clanToUpdate.setDescription(clanDetails.getDescription());
         clanToUpdate.setRequiredTrophies(clanDetails.getRequiredTrophies());
+        if (clanDetails.getIsPublic() != null) {
+            clanToUpdate.setIsPublic(clanDetails.getIsPublic());
+        }
         return ResponseEntity.ok().body(clanRepository.save(clanToUpdate));
     }
 

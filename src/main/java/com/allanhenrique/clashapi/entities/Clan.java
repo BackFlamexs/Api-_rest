@@ -44,6 +44,9 @@ public class Clan {
     @Schema(example = "2000", description = "Troféus mínimos para ingressar")
     private Integer requiredTrophies;
 
+    @Schema(example = "true", description = "Define se o clã é aberto ao público ou privado")
+    private Boolean isPublic = true;
+
     @JsonIgnore
     @OneToMany(mappedBy = "clan")
     private List<Player> players;

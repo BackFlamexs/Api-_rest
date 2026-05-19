@@ -53,10 +53,9 @@ public class PlayerController {
             @ApiResponse(responseCode = "401", description = "Chave de API ausente ou inválida")
     })
     @GetMapping
-    public ResponseEntity<Page<Player>> findAll(
-            @ParameterObject @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<Player> page = playerRepository.findAll(pageable);
-        return ResponseEntity.ok().body(page);
+    public ResponseEntity<List<Player>> findAll() {
+        List<Player> list = playerRepository.findAll();
+        return ResponseEntity.ok().body(list);
     }
 
     @Operation(

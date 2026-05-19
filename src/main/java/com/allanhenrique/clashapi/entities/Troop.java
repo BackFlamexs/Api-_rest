@@ -36,6 +36,17 @@ public class Troop {
     @Schema(example = "1050", description = "Dano por segundo (DPS)")
     private Integer damage;
 
+    @Schema(example = "FOGO", description = "Tipo de dano causado pela tropa (FOGO, GELO, AR, TERRA)")
+    private String damageType;
+
+    public String getDamageType() {
+        return damageType;
+    }
+
+    public void setDamageType(String damageType) {
+        this.damageType = damageType;
+    }
+
     // CORREÇÃO: @JsonIgnore evita loop infinito Troop → players → troops → players...
     @JsonIgnore
     @Schema(hidden = true)

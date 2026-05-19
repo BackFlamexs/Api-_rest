@@ -52,10 +52,9 @@ public class VillageController {
             @ApiResponse(responseCode = "401", description = "Chave de API ausente ou inválida")
     })
     @GetMapping
-    public ResponseEntity<Page<Village>> findAll(
-            @ParameterObject @PageableDefault(page = 0, size = 10) Pageable pageable) {
-        Page<Village> page = villageRepository.findAll(pageable);
-        return ResponseEntity.ok().body(page);
+    public ResponseEntity<List<Village>> findAll() {
+        List<Village> list = villageRepository.findAll();
+        return ResponseEntity.ok().body(list);
     }
 
     @Operation(

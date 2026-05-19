@@ -25,6 +25,9 @@ public class ClanV2Response {
     @Schema(example = "2000", description = "Troféus mínimos para entrar")
     private Integer requiredTrophies;
 
+    @Schema(example = "true", description = "Privacidade do Clã")
+    private Boolean isPublic;
+
     @Schema(description = "Total de jogadores membros do clã — novo campo da v2")
     private int totalMembers;
 }
